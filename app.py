@@ -70,5 +70,56 @@ def eliminar_cliente(id):
 
 
 
+# --- RUTAS DE PRODUCTOS ---
+@app.route("/productos")
+def productos():
+    conn = get_db_connection()
+    productos = conn.execute('SELECT * FROM productos').fetchall()
+    conn.close()
+    return render_template('productos.html', productos=productos)
+
+@app.route("/nuevo_producto", methods=['GET','POST'])
+def nuevo_producto():
+    if request.method == 'POST':
+        nombre_producto = request.form['nombre_producto']
+        precio = request.form['precio']
+        stock = request.form['stock']
+        conn = get_db_connection()
+        conn.execute("INSERT INTO productos (nombre_producto, precio, stock) VALUES(?,?,?)",(nombre_producto, precio, stock))
+        conn.commit()
+        conn.close()
+        flash('Producto agregado correctamente','success')
+        return redirect(url_for('productos'))
+    return render_template('form_producto.html')
+
+@app.route('/producto/editar/<int:id>', methods=['GET', 'POST'])
+def editar_producto(id):
+    conn = get_db_connection()
+    if request.method == 'POST':
+        nombre_producto = request.form['nombre_producto']
+        precio = request.form['precio']
+        stock = request.form['stock']
+        conn.execute("UPDATE productos SET nombre_producto = ?, precio = ?, stock = ? WHERE id = ?", (nombre_producto, precio, stock, id))
+        conn.commit()
+        conn.close()
+        flash ('Productos actualizados','success')
+        return redirect(url_for('productos'))
+    
+    producto = conn.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone()
+    conn.close()
+    return render_template('form_producto.html', producto=producto)
+
+@app.route("/producto/eliminar/<int:id>")
+def eliminar_producto(id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM productos WHERE id = ?",(id,))
+    conn.commit()
+    conn.close()
+    flash('Producto eliminado','success')
+    return redirect(url_for('productos'))
+
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
